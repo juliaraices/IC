@@ -1,0 +1,97 @@
+Sao Paulo, May 5th 2015
+
+Pipeline made by Julia Raices to compare proportion of new and old genes in different phases of Drosophila spermatogenesis:
+
+1) Input files
+
+   a) Alldata_tab.txt
+   File with spermatogenesis stage specific expression from Vibranovski et al 2009, Plos Genetics and Bayesian statistics. The file is described with different IDs types 
+   
+	Number of lines, i.e, transcripts: 18081
+	Lines with CG: 14294
+	Lines with uniq CG: 13389 
+
+   b) Zhang_2010_S1.txt
+   File with gene age data from 0 to 6 branch (0 is the oldest). First collumn is CG ID and Third collumn is the gene age	
+	Lines with CG: 12857
+
+2) Cross link age with expression data
+
+   Command:
+	perl crosslink_age_expression_2013.pl -a Zhang_2010_S1.txt -e Alldata_tab.txt
+	The scripts search for match between first collumn CG in Zhang file to second, third and four collumns of ids in the All_data file. Any match is considered.
+   
+   log file: crosslink_age_expression_2013.log
+       Contains the run and shows how many cases were not found in All_data and/or not found in Zhang file
+
+   output: crosslink_age_expression_table.txt
+   	   lines= 12923
+	   uniq CGs: 12091
+
+3)  awk '{if($14 == "chrX") XorA="X"; else if($14 == "chrom") XorA="XorAZ"; else XorA="A"; print $0, "\t", XorA}' crosslink_age_expression_table.txt > cross_test.txt
+	# determina se no arquivo do Zhang os genes eram classificados como autossômicos ou do cromossomo X
+
+4) awk '{if($5 == "arm_X") XorA="X"; else if($5 == "Chr") XorA="XorAV"; else XorA="A"; print $0,"\t", XorA}' cross_test.txt > cross_test2.txt
+	# determina se no arquivo da Vibranovski os genes eram classificados como autossômicos ou do cromossomo X
+
+5) awk '{if($19 == $18) XorA = "ok"; else XorA = "not_ok";  print $0,"\t", XorA}' cross_test2.txt >cross_test3.txt (estava faltando um ' no final)
+	# verifica se os genes foram classsificados como autossômicos ou do X da mesma forma por Vibranovski e por Zhang
+
+6) awk '{print $20}' cross_test3.txt | uniq -c
+	# verifica se foram classificados com X ou A por Zhang e Vibranovski de forma que o usuário possa ver, deve ter só um “not_ok” que é o nome da coluna
+        Todos ok
+
+checking age:
+
+Hediberts-MacBook-Air:pipeline_organizacao hedibertlopes$ awk '{print $15"\t"$17}' crosslink_age_expression_table.txt | sort | uniq 
+0					   old
+1					   new
+2					   new
+3					   new
+4					   new
+5					   new
+6					   new
+branch					   age
+
+
+
+7) awk '{if($12=="1" || $12=="2" || $12=="3") new_cat = "PostMeiotic"; else if($12=="13") new_cat = "Equal"; else if($12=="6" || $12=="8" || $12=="10") new_cat = "Mitotic";  else if($12=="9") new_cat = "Mitotic-Meiotic"; else if($12=="4" || $12=="7" || $12=="12") new_cat = "Meiotic";  else if($12=="5") new_cat = "Meiotic-PostMeiotic";  else if($12=="11") new_cat = "TheV";  else if($12=="14" || $12=="15" || $12=="16" || $12=="17" || $12=="18" || $12=="19") new_cat = "Impossible"; else new_cat= "New_Class"; print $0, "\t", new_cat}' cross_test3.txt > table_allClasses.txt
+        # tive que trocar o eles por else
+	# dá as novas classes (meiotic, postmeiotic, mitotic, equal...) pros genes de acordo com suas classes numéricas (determinadas por Vibranovski & al)
+
+checking classes
+
+Hediberts-MacBook-Air:pipeline_organizacao hedibertlopes$ awk '{print $12"\t"$21}' table_allClasses.txt | sort | uniq 
+1					   PostMeiotic
+10					   Mitotic
+11					   TheV
+12					   Meiotic
+13					   Equal
+14					   Impossible
+15					   Impossible
+16					   Impossible
+17					   Impossible
+18					   Impossible
+19					   Impossible
+2					   PostMeiotic
+3					   PostMeiotic
+4					   Meiotic
+5					   Meiotic-PostMeiotic
+6					   Mitotic
+7					   Meiotic
+8					   Mitotic
+9					   Mitotic-Meiotic
+CLASS					   New_Class
+
+8) rodar no R: analisese260315.R com table_allClasses.txt
+	# fornece gráficos e estatística de wilcox-test
+
+
+
+Pipeline Zhang
+
+- Arquivos iniciais: Tabela suplementar 4a e 4b
+- perl uniques_estavel.pl -s4a S4a_Zhang_2010.txt -s4b S4b_Zhang_2010.txt
+- rodar 2 vezes, um output com doubles (withdoubles_tot.txt) e um sem (nodoubles_tot.txt)
+- rodar no R: plot_zhang_200315.R com aqueles outputs.
+	# fornece gráficos e estatística de wilcox-test
