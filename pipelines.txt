@@ -34,16 +34,17 @@ Pipeline made by Julia Raices to compare proportion of new and old genes in diff
 4) awk '{if($5 == "arm_X") XorA="X"; else if($5 == "Chr") XorA="XorAV"; else XorA="A"; print $0,"\t", XorA}' cross_test.txt > cross_test2.txt
 	# determina se no arquivo da Vibranovski os genes eram classificados como autossômicos ou do cromossomo X
 
-5) awk '{if($19 == $18) XorA = "ok"; else XorA = "not_ok";  print $0,"\t", XorA}' cross_test2.txt >cross_test3.txt (estava faltando um ' no final)
+5) awk '{if($19 == $18) XorA = "ok"; else XorA = "not_ok";  print $0,"\t", XorA}' cross_test2.txt >cross_test3.txt
+	#(estava faltando um ' no final)
 	# verifica se os genes foram classsificados como autossômicos ou do X da mesma forma por Vibranovski e por Zhang
 
 6) awk '{print $20}' cross_test3.txt | uniq -c
 	# verifica se foram classificados com X ou A por Zhang e Vibranovski de forma que o usuário possa ver, deve ter só um “not_ok” que é o nome da coluna
         Todos ok
 
-checking age:
+7) checking age:
 
-Hediberts-MacBook-Air:pipeline_organizacao hedibertlopes$ awk '{print $15"\t"$17}' crosslink_age_expression_table.txt | sort | uniq 
+awk '{print $15"\t"$17}' crosslink_age_expression_table.txt | sort | uniq 
 0					   old
 1					   new
 2					   new
@@ -55,13 +56,13 @@ branch					   age
 
 
 
-7) awk '{if($12=="1" || $12=="2" || $12=="3") new_cat = "PostMeiotic"; else if($12=="13") new_cat = "Equal"; else if($12=="6" || $12=="8" || $12=="10") new_cat = "Mitotic";  else if($12=="9") new_cat = "Mitotic-Meiotic"; else if($12=="4" || $12=="7" || $12=="12") new_cat = "Meiotic";  else if($12=="5") new_cat = "Meiotic-PostMeiotic";  else if($12=="11") new_cat = "TheV";  else if($12=="14" || $12=="15" || $12=="16" || $12=="17" || $12=="18" || $12=="19") new_cat = "Impossible"; else new_cat= "New_Class"; print $0, "\t", new_cat}' cross_test3.txt > table_allClasses.txt
+8) awk '{if($12=="1" || $12=="2" || $12=="3") new_cat = "PostMeiotic"; else if($12=="13") new_cat = "Equal"; else if($12=="6" || $12=="8" || $12=="10") new_cat = "Mitotic";  else if($12=="9") new_cat = "Mitotic-Meiotic"; else if($12=="4" || $12=="7" || $12=="12") new_cat = "Meiotic";  else if($12=="5") new_cat = "Meiotic-PostMeiotic";  else if($12=="11") new_cat = "TheV";  else if($12=="14" || $12=="15" || $12=="16" || $12=="17" || $12=="18" || $12=="19") new_cat = "Impossible"; else new_cat= "New_Class"; print $0, "\t", new_cat}' cross_test3.txt > table_allClasses.txt
         # tive que trocar o eles por else
 	# dá as novas classes (meiotic, postmeiotic, mitotic, equal...) pros genes de acordo com suas classes numéricas (determinadas por Vibranovski & al)
 
-checking classes
+9) checking classes
 
-Hediberts-MacBook-Air:pipeline_organizacao hedibertlopes$ awk '{print $12"\t"$21}' table_allClasses.txt | sort | uniq 
+awk '{print $12"\t"$21}' table_allClasses.txt | sort | uniq 
 1					   PostMeiotic
 10					   Mitotic
 11					   TheV
@@ -86,7 +87,8 @@ CLASS					   New_Class
 8) rodar no R: analisese260315.R com table_allClasses.txt
 	# fornece gráficos e estatística de wilcox-test
 
-
+9) rodar no R: analises_pipeline_mod_110515.R com table_allClasses.txt
+	# também fornece gráficos e estatísticas de fisher
 
 Pipeline Zhang
 
