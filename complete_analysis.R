@@ -7,12 +7,17 @@
 library(ggplot2)
 library(gridExtra)
 
-
 alls <- read.table("table_allClasses.txt", header=T)
 
 #getting the table as I want it:
 table2 <- subset(alls, alls$XorAV =='A')
 table2$CLASS <- factor(table2$CLASS, levels=c(8, 10, 6, 9, 12, 4, 7, 5, 1, 3, 2, 11, 13, 14, 15, 16, 17, 18, 19))
+
+####################### only mit mei pos ###############################
+tabs <- subset(table2, table2$New_Class == "Meiotic" | table2$New_Class == "Mitotic" | table2$New_Class == "PostMeiotic")
+tabs$CLASS <- factor(tabs$CLASS, levels=c(8, 10, 6, 12, 4, 7, 1, 3, 2))
+tabs$age <- factor(tabs$age, levels=c("new","old"))
+tabs$New_Class <- factor(tabs$New_Class, levels=c("Mitotic","Meiotic","PostMeiotic"))
 
 ##################################### Part 1 - Expression and proportion of genes from classes 1 to 10 + 12 #####################################
 tabe <- subset(table2, table2$New_Class=="Meiotic" | table2$New_Class=="PostMeiotic" | table2$New_Class == "Mitotic" | table2$New_Class =="Meiotic-PostMeiotic" | table2$New_Class =="Mitotic-Meiotic") # creating a subset of the big table, with only the groups listed above (correspondent to classes 1 to 10 + 22)
@@ -20,8 +25,6 @@ tabe <- subset(table2, table2$New_Class=="Meiotic" | table2$New_Class=="PostMeio
 tabe$CLASS <- factor(tabe$CLASS, levels=c(8, 10, 6, 9, 12, 4, 7, 5, 1, 3, 2))
 tabe$age <- factor(tabe$age, levels=c("new", "old"))
 tabe$New_Class <- factor(tabe$New_Class, levels=c("Mitotic", "Mitotic-Meiotic", "Meiotic", "Meiotic-PostMeiotic", "PostMeiotic"))
-
-
 
 news <- subset(tabe, tabe$age =="new")
 old <- subset(tabe, tabe$age =="old")
@@ -144,6 +147,78 @@ mean(old.mei.pos.mit.meipos$Post.meiosis)
 
 
 ### doing graphs:
+### only mit mei pos
+gcc <- ggplot(data.frame(tabs), aes(x=New_Class, group=age))
+gccnew <- data.frame(New_Class=1:3, y=c(0.22,0.46,0.32), lab="Text", age=factor("new", levels=c("new","old")))
+gccold <- data.frame(New_Class=1:3, y=c(0.61,0.16,0.22), lab="Text", age=factor("old", levels=c("new","old")))
+gcc1 <- gcc + geom_bar(aes(y=..density.., fill=age)) + labs(x="New expression classes", y="Density") + facet_grid(~age) + theme(legend.position = "none") + ggtitle("") + geom_text(data=gccnew, label=c("66","124","88"), y=c(0.22,0.46,0.32), size=4, angle=45) + geom_text(data=gccold, label=c("3286","927","1377"), y=c(0.61,0.16,0.22), size=4, angle=45)
+# graph with proportions of new and old genes for each class (old genes = 100% and new genes = 100%, 2 graphs!)
+gcc2 <- gcc + geom_histogram(aes(y=..count../sum(..count..), fill=age)) + labs(x="New expression classes", y="Density") + ggtitle("") # one graph in wich 100% = new + old genes, and old and new genes are differentiated by collor, for genes in each group
+# graph with the proportion of new and old genes for the classes
+gcg <- ggplot(data.frame(tabs),aes(x=CLASS, group=age))
+gcgnew <- data.frame(CLASS=1:9, y=c(0.16,0.06,0.01,0.12,0.08,0.25,0.21,0.03,0.06), lab="Text", age = factor("new",levels = c("new","old")))
+gcgold <- data.frame(CLASS=1:9, y=c(0.45,0.13,0.02,0.6,0.01,0.08,0.1,0.06,0.08), lab="Text", age=factor("old", levels=c("new","old")))
+gcg1 <- gcg + geom_bar(aes(y=..density.., fill=age)) + labs(x="New expression classes", y="Density") + facet_grid(~age) + theme(legend.position = "none") + ggtitle("") + geom_text(data=gcgnew, label=c(46,18,2,34,23,67,60,11,17), y=c(0.16,0.06,0.01,0.12,0.08,0.25,0.21,0.03,0.06), size=4, angle=45) + geom_text(data=gcgold, label=c(2359,738,189,338,121,468,560,343,474), y=c(0.45,0.13,0.02,0.6,0.01,0.08,0.1,0.06,0.08), size=4, angle=45)# graph with proportions of new and old genes in the groups above mentioned (old genes = 100% and new genes = 100%, 2 graphs!)
+gcg2 <- gcg + geom_histogram(aes(y=..count../sum(..count..), fill=age)) + labs(x="New expression classes", y="Density") + ggtitle("") # one graph in wich 100% = new + old genes, and old and new genes are differentiated by collor, for genes in groups Mit, Mei, Mit-Mei, Mei-Pos and Post
+#boxplots
+cat("Wilcox tests used on graphs proportion_and_expression_mit_mei_pos.pdf:\n")
+wilcox.test(tabs$Mitosis~tabs$age)
+gcb1 <- ggplot(data.frame(tabs), aes(x=tabs$age, y=tabs$Mitosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Mitosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p = 0.1254") +ggtitle("") + scale_y_continuous(limits = c(3, 15)) # expression during mitosis for genes from classes 1 to 10 + 12
+wilcox.test(tabs$Meiosis~tabs$age)
+gcb2 <- ggplot(data.frame(tabs), aes(x=tabs$age, y=tabs$Meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") +ggtitle("") + scale_y_continuous(limits = c(3, 15)) # expression during meiosis for genes in classes 1 to 10 + 12
+wilcox.test(tabs$Post.meiosis~tabs$age)
+gcb3 <- ggplot(data.frame(tabs), aes(x=tabs$age, y=tabs$Post.meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Post-Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") +ggtitle("") + scale_y_continuous(limits = c(3, 15)) # expression during post-meiosis for genes in classes 1 to 10 + 12
+
+pdf("proportion_and_expression_mit_mei_pos.pdf", width=9, height=18)
+grid.arrange(arrangeGrob(gcg1, gcg2, nrow=1, ncol=2), arrangeGrob(gcc1, gcc2, nrow=1, ncol=2), arrangeGrob(gcb1, gcb2, gcb3, nrow=1, ncol=3))
+grid.text("Genes' age for classes 1 to 4, 6 to 8, 10 and 12 toghether", just="centre",  y = unit(0.985, "npc"))
+grid.text("Genes' age for groups toghether", just="centre",  y = unit(0.65, "npc"))
+grid.text("Genes Expression in each spermatogenesis phase by age", just="centre",  y = unit(0.31, "npc"))
+grid.text("Old genes: \n\t 5590\n New genes: \n\t 278", just="centre",  y = unit(0.65, "npc"), x=unit(0.94, "npc"), gp=gpar(fontsize=10))
+dev.off() # graphs: proportion of new and old genes in classes 1 to 1 and 12; proportion of new and old genes in groups mitotic, mitotic-meiotic, meiotic, meiotic-postmeiotic and postmeiotic; expression of those genes in mitosis, meiosis and postmeiosis.
+
+
+########## Getting all numerical classes from 1 to 10, 12 and 13 expression and proportion of new and old genes ##########
+#### Mesmos gráficos com a classe equal ####
+tabe2 <- subset(table2, table2$New_Class=="Meiotic" | table2$New_Class=="PostMeiotic" | table2$New_Class == "Mitotic" | table2$New_Class =="Meiotic-PostMeiotic" | table2$New_Class =="Mitotic-Meiotic" | table2$New_Class=="Equal")
+# making things into factors
+tabe2$CLASS <- factor(tabe2$CLASS, levels=c(8, 10, 6, 9, 12, 4, 7, 5, 1, 3, 2, 13))
+tabe2$age <- factor(tabe2$age, levels=c("new", "old"))
+tabe2$New_Class <- factor(tabe2$New_Class, levels=c("Mitotic", "Mitotic-Meiotic", "Meiotic", "Meiotic-PostMeiotic", "PostMeiotic", "Equal"))
+# doing graphs and stats no equal
+ggp11 <- ggplot(data.frame(tabe2),aes(x=CLASS, group=age))
+b1new <- data.frame(CLASS=1:12, y=c(0.08,0.03,0.01,0.03,0.5,0.04,0.1,0.12,0.095,0.02,0.03,0.38), lab="Text", age=factor("new", levels=c("new","old")))
+b1old <- data.frame(CLASS=1:12, y=c(0.042, 0.08,0.02,0.06,0.04,0.01,0.05,0.06,0.06,0.04,0.05,0.28), lab="Text", age=factor("old", levels=c("new","old")))
+b1 <- ggp11 + geom_bar(aes(y=..density.., fill=age)) + labs(x="New expression classes", y="Density") + facet_grid(~age) + ggtitle("") + theme(legend.position = "none") + geom_text(data=b1new, label=c("46","18","2","19","34","23","67","83","60","11","17","254"), y=c(0.08,0.03,0.01,0.03,0.5,0.04,0.1,0.12,0.095    ,0.02,0.03,0.38), size=4, angle=45) + geom_text(data=b1old, label=c("2359","738","189","557","338","23","468","559","560","343","474","2365"), y=c(0.042, 0.08,0.02,0.06,0.04,0.01,0.05,0.06,0.06,0.04,0.05,0.28), size=4, angle=45)
+
+b3 <- ggp11 + geom_histogram(aes(y=..count../sum(..count..), fill=age)) + labs(x="New expression classes", y="Density") + ggtitle("")
+
+group2 <- ggplot(data.frame(tabe2), aes(x=New_Class, group=age))
+g3new <- data.frame(New_Class=c("Mitotic","Mitotic-Meiotic","Meiotic","Meiotic-PostMeiotic","PostMeiotic","Equal"),y =c(0.08,0.02,0.18,0.1,0.1,0.4), lab = "Text", age = factor("new",levels = c("new","old")))
+g3old <- data.frame(New_Class=1:6, y=c(0.38,0.05,0.11,0.062,0.16,0.28), lab="Text", age=factor("old", levels=c("new","old")))
+g3 <- group2 + geom_bar(aes(y=..density.., fill=age)) + labs(x="New expression classes", y="Density") + facet_grid(~age) + theme(legend.position = "none") + ggtitle("") + geom_text(data=g3new, label=c("66","19","124","83","88","254"), y =c(0.08,0.02,0.18,0.1,0.1,0.4), size=4, angle=45) + geom_text(data=g3old, label=c("3286","557","927","559","1377","2365"),  y=c(0.38,0.05,0.11,0.062,0.16,0.28), size=4, angle=45)# graph with proportions of new and old genes in the groups above mentioned (old genes = 100% and new genes = 100%, 2 graphs!)
+g4 <- group2 + geom_histogram(aes(y=..count../sum(..count..), fill=age)) + labs(x="New expression classes", y="Density") + ggtitle("") # one graph in wich 100% = new + old genes, and old and new genes are differentiate by collor, for genes in groups Mit, Mei, Mit-Mei, Mei-Pos and Post
+
+#boxplots
+ggp12 <- ggplot(data.frame(tabe2), aes(x=tabe2$age, y=tabe2$Mitosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Mitosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
+ggp13 <- ggplot(data.frame(tabe2), aes(x=tabe2$age, y=tabe2$Meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
+ggp14 <- ggplot(data.frame(tabe2), aes(x=tabe2$age, y=tabe2$Post.meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Post-Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
+
+pdf("proportion_expression_1to10and12and13.pdf", width=9, height=8)
+grid.arrange(arrangeGrob(b1, b3, ncol=2, nrow=1), arrangeGrob(g3, g4, ncol=2, nrow=1), arrangeGrob(ggp12, ggp13, ggp14, nrow=1, ncol=3))
+grid.text("Genes' age for all classes (1 to 10 + 12 and 13) toghether", just="centre",  y = unit(0.97, "npc"))
+grid.text("Genes' age for all groups", just="centre", y=unit(0.65, "npc"))
+grid.text("Genes Expression in each spermatogenesis phase by age", just="centre",  y = unit(0.33, "npc"))
+grid.text("Old genes: \n 10788\n New genes: \n 746", just="centre",  y = unit(0.63, "npc"), x=unit(0.95, "npc"), gp=gpar(fontsize=10))
+dev.off()
+
+
+
+
+
+
+
+
 # proportoin classes
 ggp3 <- ggplot(data.frame(tabe),aes(x=CLASS, group=age)) 
 ann_text <- data.frame(CLASS = 1:11,y =c(0.1,0.03,0.01,0.03,0.06,0.05,0.15,0.2,0.13,0.02,0.03), lab = "Text", age = factor("new",levels = c("new","old")))
@@ -157,7 +232,6 @@ g1new <- data.frame(New_Class=c("Mitotic","Mitotic-Meiotic","Meiotic","Meiotic-P
 g1old <- data.frame(New_Class=1:5, y=c(0.5,0.08,0.12,0.08,0.21), lab="Text", age=factor("old", levels=c("new","old")))
 g1 <- group1 + geom_bar(aes(y=..density.., fill=age)) + labs(x="New expression classes", y="Density") + facet_grid(~age) + theme(legend.position = "none") + ggtitle("") + geom_text(data=g1new, label=c("66","19","124","83","88"), y =c(0.17,0.04,0.3,0.2,0.21), size=4, angle=45) + geom_text(data=g1old, label=c("3286","557","927","559","1377"), y=c(0.5,0.08,0.12,0.08,0.21), size=4, angle=45)# graph with proportions of new and old genes in the groups above mentioned (old genes = 100% and new genes = 100%, 2 graphs!)
 g2 <- group1 + geom_histogram(aes(y=..count../sum(..count..), fill=age)) + labs(x="New expression classes", y="Density") + ggtitle("") # one graph in wich 100% = new + old genes, and old and new genes are differentiated by collor, for genes in groups Mit, Mei, Mit-Mei, Mei-Pos and Post
-
 #boxplots
 ggp4 <- ggplot(data.frame(tabe), aes(x=tabe$age, y=tabe$Mitosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Mitosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p = 0.249") +ggtitle("") + scale_y_continuous(limits = c(3, 15)) # expression during mitosis for genes from classes 1 to 10 + 12
 ggp5 <- ggplot(data.frame(tabe), aes(x=tabe$age, y=tabe$Meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") +ggtitle("") + scale_y_continuous(limits = c(3, 15)) # expression during meiosis for genes in classes 1 to 10 + 12
@@ -198,7 +272,7 @@ ggp12 <- ggplot(data.frame(tabe2), aes(x=tabe2$age, y=tabe2$Mitosis, color=age))
 ggp13 <- ggplot(data.frame(tabe2), aes(x=tabe2$age, y=tabe2$Meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
 ggp14 <- ggplot(data.frame(tabe2), aes(x=tabe2$age, y=tabe2$Post.meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Post-Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
 
-pdf("expression_numericalclasses.pdf", width=9, height=8)
+pdf("proportion_expression_1to10and12and13.pdf", width=9, height=8)
 	grid.arrange(arrangeGrob(b1, b3, ncol=2, nrow=1), arrangeGrob(g3, g4, ncol=2, nrow=1), arrangeGrob(ggp12, ggp13, ggp14, nrow=1, ncol=3))
 	grid.text("Genes' age for all classes (1 to 10 + 12 and 13) toghether", just="centre",  y = unit(0.97, "npc"))
 	grid.text("Genes' age for all groups", just="centre", y=unit(0.65, "npc"))
@@ -222,7 +296,7 @@ ggp8 <- ggplot(data.frame(clas.14.15), aes(x=clas.14.15$age, y=clas.14.15$Mitosi
 ggp9 <- ggplot(data.frame(clas.14.15), aes(x=clas.14.15$age, y=clas.14.15$Meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
 ggp10 <- ggplot(data.frame(clas.14.15), aes(x=clas.14.15$age, y=clas.14.15$Post.meiosis, color=age)) + geom_boxplot(notch = T) + labs(x="Genes' age", y="Expression during Post-Meiosis") + theme(legend.position = "none") + annotate("text", x=1.5, y=13.5, label="p < 0.01") + scale_y_continuous(limits = c(3, 15))
 
-pdf("expression_numericalclasses1415.pdf", width=9, height=8)
+pdf("proportion_and_expression_14and15.pdf", width=9, height=8)
 	grid.arrange(arrangeGrob(c1, c3, nrow=1, ncol=2), arrangeGrob(ggp8, ggp9, ggp10, ncol=3, nrow=1))
 	grid.text("Genes' age for impossible classes 14 and 15", just="centre",  y = unit(0.96, "npc"))
 	grid.text("Genes Expression in each spermatogenesis phase by age", just="centre",  y = unit(0.49, "npc"))
@@ -240,11 +314,11 @@ print(wilcox.test(tabe$Mitosis~tabe$age))
 print(wilcox.test(tabe$Meiosis~tabe$age))
 print(wilcox.test(tabe$Post.meiosis~tabe$age))
 cat("\n Adding Equal: \n Age and expression statistical comparisson for the genes from Mitotic, Mitotic-Meiotic, Meiotic, Meiotic-PostMeiotic, PostMeiotic and Equal groups\n")
-cat("used in the boxplots of Mitosis, Meiosis and Post-Meiosis expression in the proportion_and_Expression_1to10and12and13.pdf file\n")
+cat("used in the boxplots of Mitosis, Meiosis and Post-Meiosis expression in the proportion_and_expression_1to10and12and13.pdf file\n")
 print(wilcox.test(tabe2$Mitosis~tabe2$age))
 print(wilcox.test(tabe2$Meiosis~tabe2$age))
 print(wilcox.test(tabe2$Post.meiosis~tabe2$age))
-cat("\n Just classes 14 and 15 (impossible) \n Age and expression statistical comparisson for the genes from the 14 and 15 classes (Impossible group)\n used in the boxplots of Mitosis, Meiosis and Post-Meiosis expression in the expression_numericalclasses1415.pdf file\n")
+cat("\n Just classes 14 and 15 (impossible) \n Age and expression statistical comparisson for the genes from the 14 and 15 classes (Impossible group)\n used in the boxplots of Mitosis, Meiosis and Post-Meiosis expression in the proportion_expression_14and15.pdf file\n")
 print(wilcox.test(clas.14.15$Mitosis~clas.14.15$age))
 print(wilcox.test(clas.14.15$Meiosis~clas.14.15$age))
 print(wilcox.test(clas.14.15$Post.meiosis~clas.14.15$age))
@@ -735,7 +809,7 @@ print(chisq.test(cat.mmpe5911$age, cat.mmpe5911$New_Class))
 
 cat("\n Conclusion about graphics median.pdf and expression_classes1_15.pdf: \n
     1) the median.pdf shows that for classes 3, 2 and 11 (post-meiotic), 13 (equal), 14 and 15 (impossibles) have lower expression during post-meiosis, showing evidence that genes that are up-regulated in post-meiosis tend to be lower expressed in general. This is evidence in favor of how hard is to detect post-meiotic transcription. Those genes that are post-meioticly transcribed (more RNA in post meiosis than other phases), they are lower transcribed and they may not pass the detection threshold as in situ hybridization or radioactive uridine. That is why maybe in the past, they did not detect those class of genes.\n
-    2) from the expressionclasses1_15.pdf and the proportion graphics (expression_numericalclasses.pdf and expression_genesage_numericalclasses.pdf) we can see that the classes 7, 5 and 1 have highest expressoin of new genes. \n
+    2) from the expressionclasses1_15.pdf and the proportion graphics (proportion_and_expression_1to10and12.pdf and proportion_and_expression_1to10and12and13.pdf) we can see that the classes 7, 5 and 1 have highest expression of new genes. \n
     3) from the same graphics we can see that:
     \t a) no pattern of general lower new genes expression is seen;
     \t b) there is no fixed pattern for genes' expression. Sometimes new genes have higher expressin, sometimes they have lower expression and sometimes they are equally expressed then old genes;
@@ -745,7 +819,7 @@ cat("\n Conclusion about graphics median.pdf and expression_classes1_15.pdf: \n
 	\t a) The analysis of 1 x 4 shows that the Post-Meiosis higher expression does decrease the number of new genes from 12-15% to 9%.
 	\t b) Post-meioses alone does not increases the number of new genes 3 x (8 or 6 or 10) is not significant different.
 	\t c) Meiosis is the most relevant phase for account to the increase of new genes as 8 or 9 x (5 or 7 or 12 or 4).  
-	\t d) However, the presence of higher pos-meiosis does not remove completely the effect of meiosis 1 x (8or 9 or 10 or 6: 9% x 1-3%. There are still more new genes.\n ")
+	\t d) However, the presence of higher pos-meiosis does not remove completely the effect of meiosis 1 x (8 or 9 or 10 or 6: 9% x 1-3%. There are still more new genes.\n ")
 
 sink()
 
