@@ -89,11 +89,3 @@ CLASS					   New_Class
 
 9) rodar no R: analises_pipeline_mod_110515.R com table_allClasses.txt
 	# também fornece gráficos e estatísticas de fisher
-
-Pipeline Zhang
-
-- Arquivos iniciais: Tabela suplementar 4a e 4b
-- perl uniques_estavel.pl -s4a S4a_Zhang_2010.txt -s4b S4b_Zhang_2010.txt
-- rodar 2 vezes, um output com doubles (withdoubles_tot.txt) e um sem (nodoubles_tot.txt)
-- rodar no R: plot_zhang_200315.R com aqueles outputs.
-	# fornece gráficos e estatística de wilcox-test
