@@ -84,8 +84,5 @@ awk '{print $12"\t"$21}' table_allClasses.txt | sort | uniq
 9					   Mitotic-Meiotic
 CLASS					   New_Class
 
-8) rodar no R: analisese260315.R com table_allClasses.txt
+8) rodar no R: complete_analysis.R com table_allClasses.txt
 	# fornece gráficos e estatística de wilcox-test
-
-9) rodar no R: analises_pipeline_mod_110515.R com table_allClasses.txt
-	# também fornece gráficos e estatísticas de fisher
